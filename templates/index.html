@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DermatoAI - Deep Learning Skin Cancer Detection & Explainable AI (XAI)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg {
+            background: radial-gradient(circle at top left, #1e293b, #0f172a 80%);
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .pulse-red {
+            animation: pulse-red 2s infinite;
+        }
+        @keyframes pulse-red {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
+            50% { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }
+        }
+    </style>
+</head>
+<body class="gradient-bg text-slate-100 min-h-screen flex flex-col">
+
+    <!-- Top Navigation Bar -->
+    <header class="border-b border-slate-800 bg-slate-900/60 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                    <i class="fa-solid fa-dna text-white text-lg"></i>
+                </div>
+                <div>
+                    <span class="text-xl font-bold tracking-tight text-white">Dermato<span class="text-cyan-400">AI</span></span>
+                    <span class="hidden sm:inline-block ml-2 px-2 py-0.5 text-xs font-medium rounded-full bg-cyan-950 text-cyan-400 border border-cyan-800">HAM10000 SOTA</span>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-2 text-xs text-emerald-400 bg-emerald-950/60 border border-emerald-800/80 px-3 py-1.5 rounded-full">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    <span class="font-medium">System Online</span>
+                </div>
+                <a href="#about" class="text-xs text-slate-400 hover:text-white transition">Architecture</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        
+        <!-- Header Banner -->
+        <div class="text-center max-w-3xl mx-auto mb-10">
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-sky-300 to-indigo-300">
+                Skin Cancer Diagnostic Assistant
+            </h1>
+            <p class="mt-3 text-sm sm:text-base text-slate-400">
+                Deep Convolutional Transfer Learning with <span class="text-cyan-300 font-medium">EfficientNet-B0</span>, 
+                <span class="text-amber-300 font-medium">Focal Loss</span>, and 
+                <span class="text-rose-300 font-medium">Grad-CAM Explainable AI (XAI)</span>.
+            </p>
+        </div>
+
+        <!-- 2-Column Clinical Workbench -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- LEFT COLUMN: Image Input & Samples (5 cols) -->
+            <div class="lg:col-span-5 space-y-6">
+                <div class="glass-card rounded-2xl p-6 shadow-xl">
+                    <h2 class="text-lg font-semibold text-white flex items-center justify-between mb-4">
+                        <span>1. Dermatoscopy Input</span>
+                        <span class="text-xs font-normal text-slate-400">JPG, PNG up to 16MB</span>
+                    </h2>
+
+                    <!-- Drag and Drop Zone -->
+                    <div id="drop-zone" class="border-2 border-dashed border-slate-700 hover:border-cyan-500 rounded-xl p-6 text-center cursor-pointer transition bg-slate-900/50 group">
+                        <input type="file" id="file-input" class="hidden" accept="image/*">
+                        
+                        <div id="drop-content">
+                            <div class="w-14 h-14 mx-auto rounded-full bg-slate-800 text-cyan-400 flex items-center justify-center mb-3 group-hover:scale-110 transition">
+                                <i class="fa-solid fa-cloud-arrow-up text-2xl"></i>
+                            </div>
+                            <p class="text-sm font-medium text-slate-200">Drag & drop skin lesion image here</p>
+                            <p class="text-xs text-slate-500 mt-1">or <span class="text-cyan-400 underline">browse from your device</span></p>
+                        </div>
+
+                        <!-- Image Preview in Dropzone -->
+                        <div id="preview-container" class="hidden">
+                            <img id="image-preview" src="" alt="Preview" class="max-h-56 mx-auto rounded-lg shadow-md border border-slate-700 object-cover">
+                            <button id="remove-btn" class="mt-3 text-xs text-rose-400 hover:text-rose-300 font-medium">
+                                <i class="fa-solid fa-xmark mr-1"></i> Change Image
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Clinical Test Samples for Quick Evaluation -->
+                    <div class="mt-6">
+                        <label class="block text-xs font-medium text-slate-400 mb-2">Or select a clinical sample test case:</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button onclick="selectSample('melanoma_sample.jpg', 'Melanoma')" class="sample-btn p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-left transition flex flex-col items-center group">
+                                <img src="/static/samples/melanoma_sample.jpg" alt="Melanoma" class="w-16 h-16 rounded object-cover mb-1 border border-rose-500/30">
+                                <span class="text-xs font-semibold text-rose-400">Melanoma</span>
+                                <span class="text-[10px] text-slate-500">Malignant</span>
+                            </button>
+
+                            <button onclick="selectSample('benign_nevus_sample.jpg', 'Benign Mole')" class="sample-btn p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-left transition flex flex-col items-center group">
+                                <img src="/static/samples/benign_nevus_sample.jpg" alt="Nevus" class="w-16 h-16 rounded object-cover mb-1 border border-emerald-500/30">
+                                <span class="text-xs font-semibold text-emerald-400">Nevus</span>
+                                <span class="text-[10px] text-slate-500">Benign</span>
+                            </button>
+
+                            <button onclick="selectSample('basal_cell_sample.jpg', 'Carcinoma')" class="sample-btn p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-left transition flex flex-col items-center group">
+                                <img src="/static/samples/basal_cell_sample.jpg" alt="BCC" class="w-16 h-16 rounded object-cover mb-1 border border-orange-500/30">
+                                <span class="text-xs font-semibold text-orange-400">Basal Cell</span>
+                                <span class="text-[10px] text-slate-500">Malignant</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Analyze CTA -->
+                    <button id="analyze-btn" disabled class="mt-6 w-full py-3 px-4 rounded-xl font-semibold text-sm text-white bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-cyan-600/20 transition flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-microscope text-base"></i>
+                        <span>Run AI Diagnosis & Grad-CAM</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: Clinical Results & Explainable AI (7 cols) -->
+            <div class="lg:col-span-7 space-y-6">
+                
+                <!-- Initial Placeholder State -->
+                <div id="results-placeholder" class="glass-card rounded-2xl p-12 text-center text-slate-500 flex flex-col items-center justify-center min-h-[460px]">
+                    <div class="w-16 h-16 rounded-full bg-slate-800/60 flex items-center justify-center text-slate-600 mb-4">
+                        <i class="fa-solid fa-chart-pie text-3xl"></i>
+                    </div>
+                    <h3 class="text-base font-semibold text-slate-400">No Lesion Analyzed Yet</h3>
+                    <p class="text-xs text-slate-500 max-w-sm mt-1">Upload a dermatoscopic photograph or click one of the clinical sample cards on the left to start the analysis.</p>
+                </div>
+
+                <!-- Loading State -->
+                <div id="loading-spinner" class="hidden glass-card rounded-2xl p-12 text-center flex flex-col items-center justify-center min-h-[460px]">
+                    <div class="w-14 h-14 border-4 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin mb-4"></div>
+                    <h3 class="text-base font-semibold text-white">Evaluating Pathological Patterns...</h3>
+                    <p class="text-xs text-slate-400 mt-1">Generating feature activations & Grad-CAM heatmaps</p>
+                </div>
+
+                <!-- Active Results Card -->
+                <div id="results-card" class="hidden space-y-6">
+                    
+                    <!-- Malignancy Status Banner -->
+                    <div id="risk-banner" class="rounded-2xl p-5 border flex items-center justify-between">
+                        <div>
+                            <div class="flex items-center space-x-2">
+                                <span id="risk-badge" class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"></span>
+                                <span id="confidence-badge" class="text-sm font-semibold text-slate-300"></span>
+                            </div>
+                            <h2 id="pred-name" class="text-2xl font-bold text-white mt-1"></h2>
+                        </div>
+                        <div id="risk-icon" class="text-4xl pr-2"></div>
+                    </div>
+
+                    <!-- Explainable AI (Grad-CAM) Visualizer Grid -->
+                    <div class="glass-card rounded-2xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-sm font-semibold text-white flex items-center space-x-2">
+                                <i class="fa-solid fa-eye text-cyan-400"></i>
+                                <span>Explainable AI (Grad-CAM Verification)</span>
+                            </h3>
+                            <span class="text-[11px] text-slate-400 bg-slate-800 px-2.5 py-1 rounded-md">ConvStage Features</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <!-- Original Image -->
+                            <div class="bg-slate-900/80 rounded-xl p-3 border border-slate-800 text-center">
+                                <img id="res-orig-img" src="" alt="Original Lesion" class="w-full h-52 object-cover rounded-lg border border-slate-700 mb-2">
+                                <span class="text-xs font-medium text-slate-400">Input Dermatoscopy</span>
+                            </div>
+
+                            <!-- Heatmap Overlay -->
+                            <div class="bg-slate-900/80 rounded-xl p-3 border border-slate-800 text-center">
+                                <img id="res-cam-img" src="" alt="Grad-CAM Heatmap" class="w-full h-52 object-cover rounded-lg border border-slate-700 mb-2">
+                                <span class="text-xs font-medium text-cyan-400 flex items-center justify-center space-x-1">
+                                    <i class="fa-solid fa-fire text-amber-400"></i>
+                                    <span>Grad-CAM Attention Heatmap</span>
+                                </span>
+                            </div>
+                        </div>
+
+                        <p class="text-xs text-slate-400 mt-3 leading-relaxed">
+                            <strong class="text-slate-300">Explainability Insight:</strong> The red/yellow thermal zones indicate where the neural network's convolutional kernels detected distinguishing pathological features (irregular margins, atypical pigment network, or vascular structures).
+                        </p>
+                    </div>
+
+                    <!-- Clinical Triage Guidance -->
+                    <div class="glass-card rounded-2xl p-6">
+                        <h3 class="text-sm font-semibold text-white mb-2 flex items-center space-x-2">
+                            <i class="fa-solid fa-stethoscope text-emerald-400"></i>
+                            <span>Clinical Triage Recommendation</span>
+                        </h3>
+                        <p id="clinical-action" class="text-xs sm:text-sm text-slate-300 bg-slate-900/70 p-4 rounded-xl border border-slate-800 leading-relaxed"></p>
+                    </div>
+
+                    <!-- Probability Breakdown Across All 7 Classes -->
+                    <div class="glass-card rounded-2xl p-6">
+                        <h3 class="text-sm font-semibold text-white mb-4 flex items-center justify-between">
+                            <span>Diagnostic Probability Distribution</span>
+                            <span class="text-xs font-normal text-slate-500">HAM10000 Categories</span>
+                        </h3>
+                        <div id="prob-bars" class="space-y-3">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Technical Architecture Overview Section -->
+        <section id="about" class="mt-16 border-t border-slate-800 pt-10">
+            <h2 class="text-xl font-bold text-white mb-6 text-center">Project System Architecture</h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="glass-card p-5 rounded-xl">
+                    <div class="text-cyan-400 text-xl mb-2"><i class="fa-solid fa-network-wired"></i></div>
+                    <h4 class="text-sm font-semibold text-white">EfficientNet-B0 Backbone</h4>
+                    <p class="text-xs text-slate-400 mt-1">Compound-scaled deep CNN with only 5.3M parameters, maximizing accuracy while avoiding overfitting on medical datasets.</p>
+                </div>
+                <div class="glass-card p-5 rounded-xl">
+                    <div class="text-amber-400 text-xl mb-2"><i class="fa-solid fa-scale-balanced"></i></div>
+                    <h4 class="text-sm font-semibold text-white">Multi-Class Focal Loss</h4>
+                    <p class="text-xs text-slate-400 mt-1">Incorporates focusing parameter &gamma;=2.0 and inverse class weighting to solve the 67:1 benign nevus imbalance.</p>
+                </div>
+                <div class="glass-card p-5 rounded-xl">
+                    <div class="text-rose-400 text-xl mb-2"><i class="fa-solid fa-brain"></i></div>
+                    <h4 class="text-sm font-semibold text-white">Grad-CAM (XAI)</h4>
+                    <p class="text-xs text-slate-400 mt-1">Computes spatial activation gradients from the final conv stage to generate verifiable heatmaps for clinical validation.</p>
+                </div>
+                <div class="glass-card p-5 rounded-xl">
+                    <div class="text-emerald-400 text-xl mb-2"><i class="fa-solid fa-server"></i></div>
+                    <h4 class="text-sm font-semibold text-white">Render Cloud Web Service</h4>
+                    <p class="text-xs text-slate-400 mt-1">Containerized Python Flask WSGI runtime optimized for sub-100ms inference with CPU PyTorch footprint.</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800/80 bg-slate-900/60 py-6 text-center text-xs text-slate-500">
+        <p>Final Year Engineering Project &bull; Skin Cancer Detection & Explainable AI System</p>
+        <p class="mt-1 text-[11px] text-slate-600">Disclaimer: For academic demonstration and clinical decision-support research. Not a substitute for formal histopathological biopsy.</p>
+    </footer>
+
+    <!-- Interactive JavaScript -->
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const dropContent = document.getElementById('drop-content');
+        const previewContainer = document.getElementById('preview-container');
+        const imagePreview = document.getElementById('image-preview');
+        const removeBtn = document.getElementById('remove-btn');
+        const analyzeBtn = document.getElementById('analyze-btn');
+
+        const resultsPlaceholder = document.getElementById('results-placeholder');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const resultsCard = document.getElementById('results-card');
+
+        let selectedFile = null;
+        let selectedSampleName = null;
+
+        // Click on drop zone triggers file input
+        dropZone.addEventListener('click', (e) => {
+            if (e.target !== removeBtn && !removeBtn.contains(e.target)) {
+                fileInput.click();
+            }
+        });
+
+        // Handle file browse
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        // Drag & Drop events
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-cyan-500'); });
+        dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('border-cyan-500'); });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-cyan-500');
+            if (e.dataTransfer.files.length > 0) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            selectedFile = file;
+            selectedSampleName = null;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                imagePreview.src = e.target.result;
+                dropContent.classList.add('hidden');
+                previewContainer.classList.remove('hidden');
+                analyzeBtn.disabled = false;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Remove button resets upload
+        removeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            resetUpload();
+        });
+
+        function resetUpload() {
+            selectedFile = null;
+            selectedSampleName = null;
+            fileInput.value = '';
+            imagePreview.src = '';
+            previewContainer.classList.add('hidden');
+            dropContent.classList.remove('hidden');
+            analyzeBtn.disabled = true;
+        }
+
+        // Click sample button
+        function selectSample(sampleFilename, sampleTitle) {
+            selectedFile = null;
+            selectedSampleName = sampleFilename;
+            imagePreview.src = '/static/samples/' + sampleFilename;
+            dropContent.classList.add('hidden');
+            previewContainer.classList.remove('hidden');
+            analyzeBtn.disabled = false;
+            // Trigger automatic run for seamless demonstration
+            runAnalysis();
+        }
+
+        analyzeBtn.addEventListener('click', runAnalysis);
+
+        async function runAnalysis() {
+            if (!selectedFile && !selectedSampleName) return;
+
+            // UI state
+            resultsPlaceholder.classList.add('hidden');
+            resultsCard.classList.add('hidden');
+            loadingSpinner.classList.remove('hidden');
+            analyzeBtn.disabled = true;
+
+            const formData = new FormData();
+            if (selectedFile) {
+                formData.append('image', selectedFile);
+            } else if (selectedSampleName) {
+                formData.append('sample_name', selectedSampleName);
+            }
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || 'Diagnostic evaluation failed.');
+                }
+
+                renderResults(data);
+            } catch (err) {
+                alert('Analysis Error: ' + err.message);
+                resultsPlaceholder.classList.remove('hidden');
+            } finally {
+                loadingSpinner.classList.add('hidden');
+                analyzeBtn.disabled = false;
+            }
+        }
+
+        function renderResults(data) {
+            const pred = data.prediction;
+
+            // Malignancy styling
+            const riskBanner = document.getElementById('risk-banner');
+            const riskBadge = document.getElementById('risk-badge');
+            const riskIcon = document.getElementById('risk-icon');
+            const predName = document.getElementById('pred-name');
+            const confBadge = document.getElementById('confidence-badge');
+
+            predName.textContent = pred.name + ` (${pred.code})`;
+            confBadge.textContent = `${pred.confidence}% Confidence`;
+
+            if (pred.risk.includes('Malignant')) {
+                riskBanner.className = 'rounded-2xl p-5 border border-rose-500/50 bg-rose-950/40 pulse-red flex items-center justify-between';
+                riskBadge.className = 'px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-rose-600 text-white';
+                riskBadge.textContent = 'MALIGNANT RISK';
+                riskIcon.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-rose-500"></i>';
+            } else if (pred.risk.includes('Pre-Malignant')) {
+                riskBanner.className = 'rounded-2xl p-5 border border-amber-500/50 bg-amber-950/40 flex items-center justify-between';
+                riskBadge.className = 'px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-600 text-white';
+                riskBadge.textContent = 'PRE-MALIGNANT';
+                riskIcon.innerHTML = '<i class="fa-solid fa-circle-exclamation text-amber-500"></i>';
+            } else {
+                riskBanner.className = 'rounded-2xl p-5 border border-emerald-500/50 bg-emerald-950/40 flex items-center justify-between';
+                riskBadge.className = 'px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-600 text-white';
+                riskBadge.textContent = 'BENIGN LESION';
+                riskIcon.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
+            }
+
+            // Images
+            document.getElementById('res-orig-img').src = data.original_image;
+            document.getElementById('res-cam-img').src = data.gradcam_image;
+
+            // Clinical guidance
+            document.getElementById('clinical-action').innerHTML = `
+                <strong class="text-white block mb-1">Pathological Summary:</strong> ${pred.description}<br><br>
+                <strong class="text-white block mb-1">Recommended Action:</strong> ${pred.action}
+            `;
+
+            // Probability Bars
+            const probBars = document.getElementById('prob-bars');
+            probBars.innerHTML = '';
+            data.probabilities.forEach(item => {
+                const barHtml = `
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="font-medium text-slate-300">${item.name} (${item.code})</span>
+                            <span class="font-semibold" style="color: ${item.color}">${item.probability}%</span>
+                        </div>
+                        <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                            <div class="h-2 rounded-full transition-all duration-700" style="width: ${item.probability}%; background-color: ${item.color}"></div>
+                        </div>
+                    </div>
+                `;
+                probBars.innerHTML += barHtml;
+            });
+
+            resultsCard.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
